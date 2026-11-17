@@ -1,0 +1,84 @@
+name: CI (вариант 7)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12.7-slim   # точный тег, как в варианте 7
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Вывод версии Python и коммита
+        run: |
+          python --version
+          echo "Commit: $GITHUB_SHA"
+
+      - name: Компиляция всех .py-файлов
+        run: |
+          python -m compileall -q .
+
+      - name: Проверка UTF-8 для всех текстовых файлов (вариант 7)
+        run: |
+          python - <<'PY'
+          import os, sys
+          text_exts = {'.py', '.md', '.txt', '.json', '.yml', '.yaml', '.cfg', '.ini'}
+          bad = []
+          for root, dirs, files in os.walk('.'):
+              # пропускаем .git
+              dirs[:] = [d for d in dirs if d != '.git']
+              for f in files:
+                  ext = os.path.splitext(f)[1].lower()
+                  if ext in text_exts:
+                      path = os.path.join(root, f)
+                      try:
+                          with open(path, 'rb') as fh:
+                              fh.read().decode('utf-8')
+                      except UnicodeDecodeError:
+                          bad.append(path)
+          if bad:
+              print('Файлы, не читаемые как UTF-8:')
+              for b in bad:
+                  print(' -', b)
+              sys.exit(1)
+          print('Все текстовые файлы читаются как UTF-8.')
+          PY
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12.7-slim
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Запуск unit-тестов
+        run: |
+          python -m unittest discover -s tests -v
+
+  package:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12.7-slim
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Создание артефакта (архив с кодом и документацией)
+        run: |
+          mkdir -p dist
+          # простой пример: архивируем всё, кроме .git и dist
+          tar --exclude='.git' --exclude='dist' -czf dist/app-${{ github.sha }}.tar.gz .
+          ls -la dist/
+
+      - name: Загрузка артефакта в GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-package
+          path: dist/*.tar.gz
