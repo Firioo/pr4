@@ -17,7 +17,7 @@ def validate_filename(filename):
     if "/" in filename or "\\" in filename:
         raise ValueError("Имя не должно содержать символы пути")
         
-    if filename.lower().endswith('.exe'):
+    if '.exe' in filename.lower():
         raise ValueError("Загрузка исполняемых файлов (.exe) запрещена")
         
     valid_extensions = ('.txt', '.csv')
