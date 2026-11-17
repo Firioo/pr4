@@ -5,8 +5,8 @@ def validate_filename(filename):
     if not isinstance(filename, str):
         raise TypeError("Имя файла должно быть строкой")
     
-   # if not filename:
-   #     raise ValueError("Имя файла не может быть пустым")
+    if not filename:
+        raise ValueError("Имя файла не может быть пустым")
         
     if len(filename) > 64:
         raise ValueError("Имя файла превышает 64 символа")
