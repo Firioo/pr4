@@ -56,7 +56,17 @@ jobs:
       - name: Формирование dist и manifest.txt (Задание 3)
         run: |
           mkdir -p dist
-          cp report.py README.md Dockerfile data.json.example dist/ 2>/dev/null || cp report.py README.md data.json.example dist/
+          
+          # Проверяем, что все нужные файлы на месте
+          for file in report.py README.md Dockerfile data.json.example; do
+            if [ ! -f "$file" ]; then
+              echo "ОШИБКА: файл $file не найден в репозитории!"
+              exit 1
+            fi
+          done
+          
+          # Копируем их в dist
+          cp report.py README.md Dockerfile data.json.example dist/
           
           cd dist
           ls -1 > file_list.txt
@@ -66,7 +76,7 @@ jobs:
           cat file_list.txt >> manifest.txt
           rm file_list.txt
           
-          echo "Содержимое манифеста:"
+          echo "Манифест сформирован:"
           cat manifest.txt
 
       - name: Публикация артефакта на 7 дней (Задание 3)
