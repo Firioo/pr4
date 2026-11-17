@@ -1,5 +1,6 @@
 import sys
 import json
+import math
 
 def generate_report(data):
     if not data:
